@@ -4,14 +4,17 @@
    [datascript.core :as dts]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
-   #?@(:clj [[datomic.api :as dtm]])))
+   #?@(:clj  [[clojure.spec.alpha :as s]
+              [datomic.api :as dtm]]
+       :cljs [[cljs.spec.alpha :as s]])))
 
 ;; --------| datastore |--------
 
-(defn- create-datomic-conn!
-  [{:keys [uri]}]
-  (dtm/create-database uri)
-  (dtm/connect uri))
+#?(:clj (defn- create-datomic-conn!
+          [{:keys [uri] :as config}]
+          (s/assert ::datomic-config config)
+          (dtm/create-database uri)
+          (dtm/connect uri)))
 
 (defn- create-datascript-conn!
   [_]
@@ -24,7 +27,9 @@
       (if (some? conn)
         this
         (do (log/info "Starting datastore...")
-            (let [config (get-in config [:value config-key])
+            (let [config (as-> config <>
+                           (get-in <> [:value config-key])
+                           (s/assert ::datastore-config <>))
                   conn   (case kind
                            :datomic
                            #?(:clj  (create-datomic-conn! config)
@@ -46,4 +51,19 @@
 
 (defn create-datastore
   [{:keys [config-key] :as params}]
+  (s/assert ::datastore-params params)
   (map->Datastore {:config-key config-key}))
+
+;; --------| spec |--------
+
+#?(:clj (s/def ::uri help/nblank-str?))
+
+#?(:clj (s/def ::datomic-config (s/keys :req-un [::uri])))
+
+(s/def ::kind #{#?(:clj :datomic) :datascript})
+
+(s/def ::datastore-config (s/keys :req-un [::kind]))
+
+(s/def ::config-key keyword?)
+
+(s/def ::datastore-params (s/keys :req-un [::config-key]))

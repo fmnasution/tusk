@@ -7,8 +7,10 @@
 (defn create-system-map
   []
   (c/system-map
-   :config (cfg/create-config {:source  "resources/private/tusk/config.edn"
-                               :option {:profile :dev}})
+   :config    (cfg/create-config
+               {:source "resources/private/tusk/config.edn"
+                :option {:profile :dev}})
    :datastore (c/using
-               (dtst/create-datastore {:config-key :datastore})
+               (dtst/create-datastore
+                {:config-key :datastore})
                [:config])))

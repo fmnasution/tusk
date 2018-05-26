@@ -3,8 +3,8 @@
    [com.stuartsierra.component :as c]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
-   #?@(:clj [[clojure.spec.alpha :as s]
-             [aero.core :refer [read-config]]]
+   #?@(:clj  [[clojure.spec.alpha :as s]
+              [aero.core :refer [read-config]]]
        :cljs [[cljs.spec.alpha :as s]])))
 
 ;; --------| config |--------
