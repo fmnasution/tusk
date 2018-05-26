@@ -1,0 +1,2 @@
+{:datastore {:kind #profile {:dev :datomic}
+             :uri  #profile {:dev "datomic:mem://tusk-dev"}}}
