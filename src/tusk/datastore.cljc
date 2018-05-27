@@ -108,15 +108,18 @@
 
 (defn- tx-report->event
   [tx-report]
-  [:datastore/tx-report tx-report])
+  [::tx-report tx-report])
 
 (defn create-datastore-tx-pipeliner
   ([params]
-   (-> params
-       (assoc :xform-fn   ()
-              :ex-handler ()
-              :message    "Pipelining tx report...")
-       (asnc/create-channel-pipeliner)))
+   (let [xform-fn   #(map tx-report->event)
+         ex-handler (fn [error]
+                      [::error {:error error} {:error? true}])]
+     (-> params
+         (assoc :xform-fn   xform-fn
+                :ex-handler ex-handler
+                :message    "Pipelining tx report...")
+         (asnc/create-channel-pipeliner))))
   ([]
    (create-datastore-tx-pipeliner {})))
 

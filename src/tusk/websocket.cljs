@@ -54,6 +54,26 @@
                          :client-option  client-option
                          :started?       false}))
 
+;; --------| websocket event pipeliner |---------
+
+(defn- remote-event->local-event
+  [{:keys [event] :as remote-event}]
+  (let [[id data] event]
+    [id {::?data data}]))
+
+(defn create-websocket-client-event-pipeliner
+  ([params]
+   (let [xform-fn   #(map remote-event->local-event)
+         ex-handler (fn [error]
+                      [::error {:error error} {:error? true}])]
+     (-> params
+         (assoc :xform-fn   xform-fn
+                :ex-handler ex-handler
+                :message    "Pipelining remote event...")
+         (asnc/create-channel-pipeliner))))
+  ([]
+   (create-websocket-client-event-pipeliner {})))
+
 ;; --------| spec |---------
 
 (s/def ::server-uri help/nblank-str?)

@@ -54,13 +54,25 @@
 
 ;; --------| websocket event pipeliner |---------
 
+(defn- remote-event->local-event
+  [{:keys [id ?data ring-req uid client-id ?reply-fn]
+    :as   remote-event}]
+  [id {::?data        ?data
+       ::ring-request ring-req
+       ::peer-id      uid
+       ::device-id    client-id
+       ::?reply-fn    ?reply-fn}])
+
 (defn create-websocket-server-event-pipeliner
   ([params]
-   (-> params
-       (assoc :xform-fn   ()
-              :ex-handler ()
-              :message    "Pipelining remote event...")
-       (asnc/create-channel-pipeliner)))
+   (let [xform-fn   #(map remote-event->local-event)
+         ex-handler (fn [error]
+                      [::error {:error error} {:error? true}])]
+     (-> params
+         (assoc :xform-fn   xform-fn
+                :ex-handler ex-handler
+                :message    "Pipelining remote event...")
+         (asnc/create-channel-pipeliner))))
   ([]
    (create-websocket-server-event-pipeliner {})))
 
