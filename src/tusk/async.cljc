@@ -3,7 +3,7 @@
    [com.stuartsierra.component :as c]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
-   [tusk.async.protocols :as asnc.prt]
+   [tusk.async.protocols :as asp]
    #?@(:clj  [[clojure.spec.alpha :as s]
               [clojure.core.async :as a :refer [go-loop]]]
        :cljs [[cljs.spec.alpha :as s]
@@ -15,7 +15,7 @@
 ;; --------| event dispatcher |---------
 
 (defrecord EventDispatcher [event-chan started?]
-  asnc.prt/ISink
+  asp/ISink
   (sink-chan [event-dispatcher]
     (:event-chan event-dispatcher))
 
@@ -70,9 +70,9 @@
 (defn- pipeline!
   [{:keys [parallelism to xform-fn from ex-handler] :as this}]
   (let [parallelism (or parallelism 1)
-        to-chan     (asnc.prt/sink-chan to)
+        to-chan     (asp/sink-chan to)
         xform       (xform-fn this)
-        from-chan   (asnc.prt/source-chan from)
+        from-chan   (asp/source-chan from)
         close?      false]
     (a/pipeline parallelism to-chan xform from-chan close? ex-handler)
     ::ok))

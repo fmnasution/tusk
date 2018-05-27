@@ -4,9 +4,11 @@
    [cljs.core.async :as a]
    [com.stuartsierra.component :as c]
    [taoensso.sente :as st]
+   [taoensso.sente.interfaces :as sti]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
-   [tusk.async.protocols :as asnc.prt]))
+   [tusk.async.protocols :as asp]
+   [tusk.async :as as]))
 
 ;; --------| websocket client |--------
 
@@ -17,7 +19,7 @@
                             send!
                             state
                             started?]
-  asnc.prt/ISource
+  asp/ISource
   (source-chan [websocket-client]
     (:recv-chan websocket-client))
 
@@ -50,9 +52,9 @@
 (defn create-websocket-client
   [{:keys [server-uri client-option] :as params}]
   (s/assert ::websocket-params params)
-  (map->WebsocketClient {:server-uri     server-uri
-                         :client-option  client-option
-                         :started?       false}))
+  (map->WebsocketClient {:server-uri    server-uri
+                         :client-option client-option
+                         :started?      false}))
 
 ;; --------| websocket event pipeliner |---------
 
@@ -70,7 +72,7 @@
          (assoc :xform-fn   xform-fn
                 :ex-handler ex-handler
                 :message    "Pipelining remote event...")
-         (asnc/create-channel-pipeliner))))
+         (as/create-channel-pipeliner))))
   ([]
    (create-websocket-client-event-pipeliner {})))
 
@@ -86,8 +88,8 @@
 
 (s/def ::params map?)
 
-(s/def ::packer (s/or :edn #{:edn}
-                      :interface #(satisfies? st.itf/IPacker %)))
+(s/def ::packer (s/or :edn       #{:edn}
+                      :interface #(satisfies? sti/IPacker %)))
 
 (s/def ::ajax-opts any?)
 

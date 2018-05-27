@@ -1,14 +1,14 @@
 (ns tusk.datastore
   (:require
    [com.stuartsierra.component :as c]
-   [datascript.core :as dts]
+   [datascript.core :as dats]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
-   [tusk.async.protocols :as asnc.prt]
-   [tusk.async :as asnc]
+   [tusk.async.protocols :as asp]
+   [tusk.async :as as]
    #?@(:clj  [[clojure.spec.alpha :as s]
               [clojure.core.async :as a]
-              [datomic.api :as dtm]]
+              [datomic.api :as datm]]
        :cljs [[cljs.core.async :as a]
               [cljs.spec.alpha :as s]])))
 
@@ -17,12 +17,12 @@
 #?(:clj (defn- create-datomic-conn!
           [{:keys [uri] :as config}]
           (s/assert ::datomic-config config)
-          (dtm/create-database uri)
-          (dtm/connect uri)))
+          (datm/create-database uri)
+          (datm/connect uri)))
 
 (defn- create-datascript-conn!
   [_]
-  (dts/create-conn))
+  (dats/create-conn))
 
 (defrecord Datastore [config config-key kind conn]
   c/Lifecycle
@@ -46,7 +46,7 @@
       this
       (do (log/info "Stopping datastore...")
           #?(:clj (when (= :datomic kind)
-                    (dtm/release conn)))
+                    (datm/release conn)))
           (assoc this :kind nil :conn nil)))))
 
 (defn create-datastore
@@ -62,7 +62,7 @@
     (case kind
       :datomic
       #?(:clj  (let [active?_        (atom true)
-                     tx-report-queue (dtm/tx-report-queue conn)]
+                     tx-report-queue (datm/tx-report-queue conn)]
                  (future
                    (while @active?_
                      (let [tx-report (.take tx-report-queue)]
@@ -71,11 +71,11 @@
          :cljs nil)
 
       :datascript
-      (do (dts/listen! conn #(a/put! tx-report-chan %) ::tx-report)
-          #(dts/unlisten! conn ::tx-report)))))
+      (do (dats/listen! conn #(a/put! tx-report-chan %) ::tx-report)
+          #(dats/unlisten! conn ::tx-report)))))
 
 (defrecord DatastoreTxMonitor [datastore tx-report-chan stopper]
-  asnc.prt/ISource
+  asp/ISource
   (source-chan [datastore-tx-monitor]
     (:tx-report-chan datastore-tx-monitor))
 
@@ -119,7 +119,7 @@
          (assoc :xform-fn   xform-fn
                 :ex-handler ex-handler
                 :message    "Pipelining tx report...")
-         (asnc/create-channel-pipeliner))))
+         (as/create-channel-pipeliner))))
   ([]
    (create-datastore-tx-pipeliner {})))
 

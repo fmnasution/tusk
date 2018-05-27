@@ -4,11 +4,11 @@
    [clojure.core.async :as a]
    [com.stuartsierra.component :as c]
    [taoensso.sente :as st]
-   [taoensso.sente.interfaces :as st.itf]
+   [taoensso.sente.interfaces :as sti]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
-   [tusk.async.protocols :as asnc.prt]
-   [tusk.async :as asnc]))
+   [tusk.async.protocols :as asp]
+   [tusk.async :as as]))
 
 ;; --------| websocket server |--------
 
@@ -20,7 +20,7 @@
                             send!
                             connected-uids
                             started?]
-  asnc.prt/ISource
+  asp/ISource
   (source-chan [websocket-server]
     (:recv-chan websocket-server))
 
@@ -72,13 +72,13 @@
          (assoc :xform-fn   xform-fn
                 :ex-handler ex-handler
                 :message    "Pipelining remote event...")
-         (asnc/create-channel-pipeliner))))
+         (as/create-channel-pipeliner))))
   ([]
    (create-websocket-server-event-pipeliner {})))
 
 ;; --------| spec |---------
 
-(s/def ::server-adapter #(satisfies? st.itf/IServerChanAdapter %))
+(s/def ::server-adapter #(satisfies? sti/IServerChanAdapter %))
 
 (s/def ::user-id-fn fn?)
 
@@ -94,8 +94,8 @@
 
 (s/def ::send-buf-ms-ws help/pos-int?)
 
-(s/def ::packer (s/or :edn #{:edn}
-                      :interface #(satisfies? st.itf/IPacker %)))
+(s/def ::packer (s/or :edn       #{:edn}
+                      :interface #(satisfies? sti/IPacker %)))
 
 (s/def ::server-option (s/keys :opt-un [::user-id-fn
                                         ::csrf-token-fn

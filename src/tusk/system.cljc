@@ -2,10 +2,10 @@
   (:require
    [com.stuartsierra.component :as c]
    [taoensso.sente.packers.transit :refer [get-transit-packer]]
-   [tusk.config :as cfg]
-   [tusk.datastore :as dtst]
+   [tusk.config :as cf]
+   [tusk.datastore :as dts]
    [tusk.websocket :as ws]
-   [tusk.async :as asnc]
+   [tusk.async :as as]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
               :refer [get-sch-adapter]]])))
 
@@ -15,31 +15,31 @@
   []
   (c/system-map
    :config
-   (cfg/create-config {:source "resources/private/tusk/config.edn"
-                       :option {:profile :dev}})
+   (cf/create-config {:source "resources/private/tusk/config.edn"
+                      :option {:profile :dev}})
 
    :datastore
    (c/using
-    (dtst/create-datastore {:config-key :datastore})
+    (dts/create-datastore {:config-key :datastore})
     [:config])
 
    :datastore-tx-monitor
    (c/using
-    (dtst/create-datastore-tx-monitor)
+    (dts/create-datastore-tx-monitor)
     [:datastore])
 
    :datastore-tx-pipeliner
    (c/using
-    (dtst/create-datastore-tx-pipeliner)
+    (dts/create-datastore-tx-pipeliner)
     {:from :datastore-tx-monitor
      :to   :event-dispatcher})
 
    :event-dispatcher
-   (asnc/create-event-dispatcher)
+   (as/create-event-dispatcher)
 
    :event-consumer
    (c/using
-    (asnc/create-event-consumer)
+    (as/create-event-consumer)
     [:event-dispatcher])
 
    #?@(:clj  [[:websocket-server
@@ -54,7 +54,7 @@
                  :to   :event-dispatcher})]]
        :cljs [[:websocket-client
                (ws/create-websocket-client
-                {:server-uri "/chsk"
+                {:server-uri    "/chsk"
                  :client-option {:packer (get-transit-packer)}})
 
                :websocket-client-event-pipeliner
