@@ -12,11 +12,11 @@
 ;; --------| system |---------
 
 (defn create-system-map
-  []
+  [option]
   (c/system-map
    :config
    (cf/create-config {:source "resources/private/tusk/config.edn"
-                      :option {:profile :dev}})
+                      :option option})
 
    :datastore
    (c/using
@@ -42,23 +42,23 @@
     (as/create-event-consumer)
     [:event-dispatcher])
 
-   #?@(:clj  [[:websocket-server
-               (ws/create-websocket-server
-                {:server-adapter (get-sch-adapter)
-                 :server-option  {:packer (get-transit-packer)}})
+   #?@(:clj  [:websocket-server
+              (ws/create-websocket-server
+               {:server-adapter (get-sch-adapter)
+                :server-option  {:packer (get-transit-packer)}})
 
-               :websocket-server-event-pipeliner
-               (c/using
-                (ws/create-websocket-server-event-pipeliner)
-                {:from :websocket-server
-                 :to   :event-dispatcher})]]
-       :cljs [[:websocket-client
-               (ws/create-websocket-client
-                {:server-uri    "/chsk"
-                 :client-option {:packer (get-transit-packer)}})
+              :websocket-server-event-pipeliner
+              (c/using
+               (ws/create-websocket-server-event-pipeliner)
+               {:from :websocket-server
+                :to   :event-dispatcher})]
+       :cljs [:websocket-client
+              (ws/create-websocket-client
+               {:server-uri    "/chsk"
+                :client-option {:packer (get-transit-packer)}})
 
-               :websocket-client-event-pipeliner
-               (c/using
-                (ws/create-websocket-client-event-pipeliner)
-                {:from :websocket-client
-                 :to   :event-dispatcher})]]) ))
+              :websocket-client-event-pipeliner
+              (c/using
+               (ws/create-websocket-client-event-pipeliner)
+               {:from :websocket-client
+                :to   :event-dispatcher})]) ))

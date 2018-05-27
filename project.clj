@@ -26,10 +26,13 @@
                    [:target-path
                     "resources/public/tusk/app.js"
                     "resources/public/tusk/out"]
-                   :dependencies [[cider/nrepl "0.3.0"]
+                   :source-paths ["env/dev/"]
+                   :dependencies [[com.stuartsierra/component.repl "0.2.0"]
+                                  [cider/nrepl "0.3.0"]
                                   [cider/piggieback "0.3.2"]
                                   [figwheel-sidecar "0.5.16"]
                                   [org.clojure/tools.namespace "0.3.0-alpha4"]]
                    :plugins [[refactor-nrepl "2.4.0-SNAPSHOT"]]
-                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}}}
+                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]
+                                  :init-ns tusk.dev}}}
   :aliases {"dev" ["with-profile" "+dev" "do" "clean," "repl" ":headless"]})
