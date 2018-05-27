@@ -5,7 +5,8 @@
    [com.stuartsierra.component :as c]
    [taoensso.sente :as st]
    [taoensso.timbre :as log]
-   [taoensso.encore :as help]))
+   [taoensso.encore :as help]
+   [tusk.async.protocols :as asnc.prt]))
 
 ;; --------| websocket client |--------
 
@@ -16,6 +17,10 @@
                             send!
                             state
                             started?]
+  asnc.prt/ISource
+  (source-chan [websocket-client]
+    (:recv-chan websocket-client))
+
   c/Lifecycle
   (start [{:keys [server-uri client-option started?] :as this}]
     (if started?
@@ -61,13 +66,14 @@
 
 (s/def ::params map?)
 
-(s/def ::packer any?)
+(s/def ::packer (s/or :edn #{:edn}
+                      :interface #(satisfies? st.itf/IPacker %)))
 
 (s/def ::ajax-opts any?)
 
-(s/def ::wrap-recv-evs? any?)
+(s/def ::wrap-recv-evs? boolean?)
 
-(s/def ::ws-kalive-ms any?)
+(s/def ::ws-kalive-ms help/pos-int?)
 
 (s/def ::client-option (s/keys :opt-un [::type
                                         ::protocol

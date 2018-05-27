@@ -4,8 +4,11 @@
    [clojure.core.async :as a]
    [com.stuartsierra.component :as c]
    [taoensso.sente :as st]
+   [taoensso.sente.interfaces :as st.itf]
    [taoensso.timbre :as log]
-   [taoensso.encore :as help]))
+   [taoensso.encore :as help]
+   [tusk.async.protocols :as asnc.prt]
+   [tusk.async :as asnc]))
 
 ;; --------| websocket server |--------
 
@@ -17,6 +20,10 @@
                             send!
                             connected-uids
                             started?]
+  asnc.prt/ISource
+  (source-chan [websocket-server]
+    (:recv-chan websocket-server))
+
   c/Lifecycle
   (start [{:keys [server-adapter server-option started?] :as this}]
     (if started?
@@ -35,18 +42,8 @@
                    :send!          send-fn
                    :connected-uids connected-uids
                    :started?       true)))))
-  (stop [{:keys [recv-chan started?] :as this}]
-    (if-not started?
-      this
-      (do (log/info "Stopping websocket server...")
-          (a/close! recv-chan)
-          (assoc this
-                 :ring-ajax-get  nil
-                 :ring-ajax-post nil
-                 :recv-chan      nil
-                 :send!          nil
-                 :connected-uids nil
-                 :started?       false)))))
+  (stop [this]
+    this))
 
 (defn create-websocket-server
   [{:keys [server-adapter server-option] :as params}]
@@ -55,10 +52,21 @@
                          :server-option  server-option
                          :started?       false}))
 
+;; --------| websocket event pipeliner |---------
+
+(defn create-websocket-server-event-pipeliner
+  ([params]
+   (-> params
+       (assoc :xform-fn   ()
+              :ex-handler ()
+              :message    "Pipelining remote event...")
+       (asnc/create-channel-pipeliner)))
+  ([]
+   (create-websocket-server-event-pipeliner {})))
+
 ;; --------| spec |---------
 
-(s/def ::server-adapter
-  #(satisfies? taoensso.sente.interfaces/IServerChanAdapter %))
+(s/def ::server-adapter #(satisfies? st.itf/IServerChanAdapter %))
 
 (s/def ::user-id-fn fn?)
 
@@ -74,9 +82,8 @@
 
 (s/def ::send-buf-ms-ws help/pos-int?)
 
-(s/def ::packer
-  (s/or :edn #{:edn}
-        :interface #(satisfies? taoensso.sente.interfaces/IPacker %)))
+(s/def ::packer (s/or :edn #{:edn}
+                      :interface #(satisfies? st.itf/IPacker %)))
 
 (s/def ::server-option (s/keys :opt-un [::user-id-fn
                                         ::csrf-token-fn

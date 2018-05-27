@@ -5,27 +5,60 @@
    [tusk.config :as cfg]
    [tusk.datastore :as dtst]
    [tusk.websocket :as ws]
+   [tusk.async :as asnc]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
               :refer [get-sch-adapter]]])))
+
+;; --------| system |---------
 
 (defn create-system-map
   []
   (c/system-map
-   :config               (cfg/create-config
-                          {:source "resources/private/tusk/config.edn"
-                           :option {:profile :dev}})
-   :datastore            (c/using
-                          (dtst/create-datastore
-                           {:config-key :datastore})
-                          [:config])
-   :datastore-tx-monitor (c/using
-                          (dtst/create-datastore-tx-monitor)
-                          [:datastore])
+   :config
+   (cfg/create-config {:source "resources/private/tusk/config.edn"
+                       :option {:profile :dev}})
+
+   :datastore
+   (c/using
+    (dtst/create-datastore {:config-key :datastore})
+    [:config])
+
+   :datastore-tx-monitor
+   (c/using
+    (dtst/create-datastore-tx-monitor)
+    [:datastore])
+
+   :datastore-tx-pipeliner
+   (c/using
+    (dtst/create-datastore-tx-pipeliner)
+    {:from :datastore-tx-monitor
+     :to   :event-dispatcher})
+
+   :event-dispatcher
+   (asnc/create-event-dispatcher)
+
+   :event-consumer
+   (c/using
+    (asnc/create-event-consumer)
+    [:event-dispatcher])
+
    #?@(:clj  [[:websocket-server
                (ws/create-websocket-server
                 {:server-adapter (get-sch-adapter)
-                 :server-option  {:packer (get-transit-packer)}})]]
+                 :server-option  {:packer (get-transit-packer)}})
+
+               :websocket-server-event-pipeliner
+               (c/using
+                (ws/create-websocket-server-event-pipeliner)
+                {:from :websocket-server
+                 :to   :event-dispatcher})]]
        :cljs [[:websocket-client
                (ws/create-websocket-client
                 {:server-uri "/chsk"
-                 :client-option {:packer (get-transit-packer)}})]]) ))
+                 :client-option {:packer (get-transit-packer)}})
+
+               :websocket-client-event-pipeliner
+               (c/using
+                (ws/create-websocket-client-event-pipeliner)
+                {:from :websocket-client
+                 :to   :event-dispatcher})]]) ))

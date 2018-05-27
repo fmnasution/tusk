@@ -4,6 +4,8 @@
    [datascript.core :as dts]
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
+   [tusk.async.protocols :as asnc.prt]
+   [tusk.async :as asnc]
    #?@(:clj  [[clojure.spec.alpha :as s]
               [clojure.core.async :as a]
               [datomic.api :as dtm]]
@@ -73,6 +75,10 @@
           #(dts/unlisten! conn ::tx-report)))))
 
 (defrecord DatastoreTxMonitor [datastore tx-report-chan stopper]
+  asnc.prt/ISource
+  (source-chan [datastore-tx-monitor]
+    (:tx-report-chan datastore-tx-monitor))
+
   c/Lifecycle
   (start [this]
     (let [{:keys [tx-report-chan stopper]} this]
@@ -92,10 +98,27 @@
             (assoc this :stopper nil))))))
 
 (defn create-datastore-tx-monitor
-  ([{:keys [tx-report-chan]}]
+  ([{:keys [tx-report-chan] :as params}]
+   (s/assert ::datastore-tx-monitor-params params)
    (map->DatastoreTxMonitor {:tx-report-chan tx-report-chan}))
   ([]
    (create-datastore-tx-monitor {})))
+
+;; --------| datastore tx pipeliner |--------
+
+(defn- tx-report->event
+  [tx-report]
+  [:datastore/tx-report tx-report])
+
+(defn create-datastore-tx-pipeliner
+  ([params]
+   (-> params
+       (assoc :xform-fn   ()
+              :ex-handler ()
+              :message    "Pipelining tx report...")
+       (asnc/create-channel-pipeliner)))
+  ([]
+   (create-datastore-tx-pipeliner {})))
 
 ;; --------| spec |--------
 
@@ -110,3 +133,7 @@
 (s/def ::config-key keyword?)
 
 (s/def ::datastore-params (s/keys :req-un [::config-key]))
+
+(s/def ::tx-report-chan help/chan?)
+
+(s/def ::datastore-tx-monitor-params (s/keys :opt-un [::tx-report-chan]))
