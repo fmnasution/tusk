@@ -11,21 +11,17 @@
 
 (defrecord Config [source option value]
   c/Lifecycle
-  (start [this]
-    (let [{:keys [source option value]} this]
-      (if (some? value)
-        this
-        (do (log/info "Reading config...")
-            (let [value #?(:clj  (read-config source option)
-                           :cljs {})]
-              (assoc this :value value))))))
-  (stop [this]
-    (let [{:keys [value]} this]
-      (if (nil? value)
-        this
-        (assoc this :value nil)))))
-
-;; ----| API |----
+  (start [{:keys [source option value] :as this}]
+    (if (some? value)
+      this
+      (do (log/info "Reading config...")
+          (let [value #?(:clj  (read-config source option)
+                         :cljs {})]
+            (assoc this :value value)))))
+  (stop [{:keys [value] :as this}]
+    (if (nil? value)
+      this
+      (assoc this :value nil))))
 
 (defn create-config
   [{:keys [source option] :as params}]

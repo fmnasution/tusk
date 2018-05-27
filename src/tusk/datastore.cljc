@@ -5,8 +5,10 @@
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
    #?@(:clj  [[clojure.spec.alpha :as s]
+              [clojure.core.async :as a]
               [datomic.api :as dtm]]
-       :cljs [[cljs.spec.alpha :as s]])))
+       :cljs [[cljs.core.async :as a]
+              [cljs.spec.alpha :as s]])))
 
 ;; --------| datastore |--------
 
@@ -22,37 +24,78 @@
 
 (defrecord Datastore [config config-key kind conn]
   c/Lifecycle
-  (start [this]
-    (let [{:keys [config config-key conn]} this]
-      (if (some? conn)
-        this
-        (do (log/info "Starting datastore...")
-            (let [config (as-> config <>
-                           (get-in <> [:value config-key])
-                           (s/assert ::datastore-config <>))
-                  conn   (case kind
-                           :datomic
-                           #?(:clj  (create-datomic-conn! config)
-                              :cljs nil)
+  (start [{:keys [config config-key conn] :as this}]
+    (if (some? conn)
+      this
+      (do (log/info "Starting datastore...")
+          (let [config (as-> config <>
+                         (get-in <> [:value config-key])
+                         (s/assert ::datastore-config <>))
+                conn   (case kind
+                         :datomic
+                         #?(:clj  (create-datomic-conn! config)
+                            :cljs nil)
 
-                           :datascript
-                           (create-datascript-conn! config))]
-              (assoc this :kind kind :conn conn))))))
-  (stop [this]
-    (let [{:keys [kind conn]} this]
-      (if (nil? conn)
-        this
-        (do (log/info "Stopping datastore...")
-            #?(:clj (when (= :datomic kind)
-                      (dtm/release conn)))
-            (assoc this :kind nil :conn nil))))))
-
-;; ----| API |----
+                         :datascript
+                         (create-datascript-conn! config))]
+            (assoc this :kind kind :conn conn)))))
+  (stop [{:keys [kind conn] :as this}]
+    (if (nil? conn)
+      this
+      (do (log/info "Stopping datastore...")
+          #?(:clj (when (= :datomic kind)
+                    (dtm/release conn)))
+          (assoc this :kind nil :conn nil)))))
 
 (defn create-datastore
   [{:keys [config-key] :as params}]
   (s/assert ::datastore-params params)
   (map->Datastore {:config-key config-key}))
+
+;; --------| datastore tx monitor |--------
+
+(defn- monitor-tx!
+  [{:keys [datastore tx-report-chan]}]
+  (let [{:keys [kind conn]} datastore]
+    (case kind
+      :datomic
+      #?(:clj  (let [active?_        (atom true)
+                     tx-report-queue (dtm/tx-report-queue conn)]
+                 (future
+                   (while @active?_
+                     (let [tx-report (.take tx-report-queue)]
+                       (a/put! tx-report-chan tx-report))))
+                 #(reset! active?_ false))
+         :cljs nil)
+
+      :datascript
+      (do (dts/listen! conn #(a/put! tx-report-chan %) ::tx-report)
+          #(dts/unlisten! conn ::tx-report)))))
+
+(defrecord DatastoreTxMonitor [datastore tx-report-chan stopper]
+  c/Lifecycle
+  (start [this]
+    (let [{:keys [tx-report-chan stopper]} this]
+      (if (some? stopper)
+        this
+        (do (log/info "Monitoring transaction on datastore...")
+            (let [tx-report-chan (or tx-report-chan (a/chan 100))
+                  this           (assoc this :tx-report-chan tx-report-chan)
+                  stopper        (monitor-tx! this)]
+              (assoc this :stopper stopper))))))
+  (stop [this]
+    (let [{:keys [stopper]} this]
+      (if (nil? stopper)
+        this
+        (do (log/info "No longer monitors transaction on datastore...")
+            (stopper)
+            (assoc this :stopper nil))))))
+
+(defn create-datastore-tx-monitor
+  ([{:keys [tx-report-chan]}]
+   (map->DatastoreTxMonitor {:tx-report-chan tx-report-chan}))
+  ([]
+   (create-datastore-tx-monitor {})))
 
 ;; --------| spec |--------
 
