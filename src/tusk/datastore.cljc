@@ -33,6 +33,7 @@
           (let [config (as-> config <>
                          (get-in <> [:value config-key])
                          (s/assert ::datastore-config <>))
+                kind   (:kind config)
                 conn   (case kind
                          :datomic
                          #?(:clj  (create-datomic-conn! config)
@@ -112,7 +113,7 @@
 
 (defn create-datastore-tx-pipeliner
   ([params]
-   (let [xform-fn   #(map tx-report->event)
+   (let [xform-fn   (constantly (map tx-report->event))
          ex-handler (fn [error]
                       [::error {:error error} {:error? true}])]
      (-> params

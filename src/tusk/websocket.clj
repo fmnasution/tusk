@@ -65,7 +65,7 @@
 
 (defn create-websocket-server-event-pipeliner
   ([params]
-   (let [xform-fn   #(map remote-event->local-event)
+   (let [xform-fn   (constantly (map remote-event->local-event))
          ex-handler (fn [error]
                       [::error {:error error} {:error? true}])]
      (-> params
