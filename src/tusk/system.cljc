@@ -42,6 +42,11 @@
     (as/create-event-consumer)
     [:event-dispatcher])
 
+   :effect-executor
+   (c/using
+    (as/create-effect-executor)
+    [:event-consumer :event-dispatcher])
+
    #?@(:clj  [:websocket-server
               (ws/create-websocket-server
                {:server-adapter (get-sch-adapter)
