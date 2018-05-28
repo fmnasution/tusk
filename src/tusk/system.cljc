@@ -6,6 +6,7 @@
    [tusk.datastore :as dts]
    [tusk.websocket :as ws]
    [tusk.async :as as]
+   [tusk.web :as w]
    [tusk.async.handler]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
               :refer [get-sch-adapter]]])))
@@ -18,6 +19,11 @@
    :config
    (cf/create-config {:source "resources/private/tusk/config.edn"
                       :option option})
+
+   :web-server
+   (c/using
+    (w/create-web-server {:config-key :web-server})
+    [:config])
 
    :datastore
    (c/using

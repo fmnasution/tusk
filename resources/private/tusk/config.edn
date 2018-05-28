@@ -1,2 +1,3 @@
-{:datastore {:kind #profile {:dev :datomic}
-             :uri  #profile {:dev "datomic:mem://tusk-dev"}}}
+{:datastore  #profile {:dev {:kind :datomic
+                             :uri  "datomic:mem://tusk-dev"}}
+ :web-server #profile {:dev {:port 8080}}}

@@ -9,6 +9,7 @@
                  [com.datomic/datomic-free "0.9.5697"]
                  [http-kit "2.3.0"]
                  [aero "1.1.3"]
+                 [metosin/ring-http-response "0.9.0"]
                  [com.cognitect/transit-clj "0.8.309"]
                  ;; --------| cljc |--------
                  [org.clojure/core.async "0.4.474"]
