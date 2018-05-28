@@ -7,6 +7,7 @@
    [tusk.websocket :as ws]
    [tusk.async :as as]
    [tusk.web :as w]
+   [tusk.router :as rr]
    [tusk.async.handler]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
               :refer [get-sch-adapter]]])))
@@ -21,9 +22,12 @@
                       :option option})
 
    :web-server
-   (c/using
-    (w/create-web-server {:config-key :web-server})
-    [:config])
+   (-> (w/create-web-server {:config-key :web-server})
+       (c/using [:config])
+       (c/using {:ring-handler :ring-router}))
+
+   :ring-router
+   (rr/create-ring-router)
 
    :datastore
    (c/using

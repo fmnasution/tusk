@@ -15,6 +15,7 @@
                  [org.clojure/core.async "0.4.474"]
                  [com.stuartsierra/component "0.3.2"]
                  [datascript "0.16.5"]
+                 [bidi "2.1.3"]
                  [com.taoensso/sente "1.12.0"]
                  [com.taoensso/timbre "4.10.0"]
                  [com.taoensso/encore "2.96.0"]
