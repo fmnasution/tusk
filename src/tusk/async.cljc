@@ -39,6 +39,22 @@
 
 ;; --------| event consumer |---------
 
+(defn- error-command?
+  [[_ _ metadata]]
+  (:error? metadata false))
+
+(defn- dispatch-by-id
+  [_ [id]]
+  id)
+
+(defmulti -event->effects dispatch-by-id)
+
+(defn reg-event
+  [id handler]
+  (defmethod -event->effects id
+    [context event]
+    (handler context event)))
+
 (defn- go-consume-event!
   [{:keys [event-dispatcher effect-chan stop-chan]
     :as   event-consumer}]
@@ -47,7 +63,26 @@
       (help/when-let [chans        [event-chan stop-chan]
                       [event chan] (a/alts! chans :priority true)
                       continue?    (and (not= stop-chan chan) (some? event))]
-        ;; TODO: implement this
+        (help/when-let [commands (help/catching
+                                  (->> event
+                                       (s/assert ::command)
+                                       (-event->effects event-consumer)
+                                       (not-empty)
+                                       (s/assert ::generated-effects))
+                                  error
+                                  [[:event-consumer/error
+                                    {:error error
+                                     :event event}
+                                    {:error? true}]])
+
+                        chan     (help/cond!
+                                  (every? error-command? commands)
+                                  chan
+
+                                  (every? (complement error-command?) commands)
+                                  effect-chan)]
+          (doseq [command commands]
+            (a/>! chan command)))
         (recur)))
     ::ok))
 
@@ -60,8 +95,8 @@
           (let [effect-chan (or effect-chan (a/chan 100))
                 stop-chan   (a/chan)
                 this        (assoc this
-                                   :effect-chan   effect-chan
-                                   :stop-chan     stop-chan)]
+                                   :effect-chan effect-chan
+                                   :stop-chan   stop-chan)]
             (go-consume-event! this)
             this))))
   (stop [{:keys [stop-chan] :as this}]
@@ -80,6 +115,14 @@
 
 ;; --------| effect executor |---------
 
+(defmulti -execute-effect! dispatch-by-id)
+
+(defn reg-effect
+  [id handler]
+  (defmethod -execute-effect! id
+    [context effect]
+    (handler context effect)))
+
 (defn- go-execute-effect!
   [{:keys [event-consumer event-dispatcher stop-chan] :as effect-executor}]
   (let [effect-chan (:effect-chan event-consumer)
@@ -88,7 +131,18 @@
       (help/when-let [chans         [effect-chan stop-chan]
                       [effect chan] (a/alts! chans :priority true)
                       continue?     (and (not= stop-chan chan) (some? effect))]
-        ;; TODO: implement this
+        (help/when-let [result (help/catching
+                                (->> effect
+                                     (s/assert ::command)
+                                     (-execute-effect! effect-executor))
+                                error
+                                [:effect-executor/error
+                                 {:error  error
+                                  :effect effect}
+                                 {:error? true}])
+
+                        error? (error-command? result)]
+          (a/>! event-chan result))
         (recur)))
     ::ok))
 
@@ -98,8 +152,8 @@
     (if (some? stop-chan)
       this
       (do (log/info "Starting effect executor...")
-          (let [stop-chan       (a/chan)
-                this            (assoc this :stop-chan stop-chan)]
+          (let [stop-chan (a/chan)
+                this      (assoc this :stop-chan stop-chan)]
             (go-execute-effect! this)
             this))))
   (stop [{:keys [event-consumer stop-chan] :as this}]
@@ -170,3 +224,11 @@
 
 (s/def ::channel-pipeliner-params (s/keys :req-un [::xform-fn ::ex-handler]
                                           :opt-un [::parallelism ::message]))
+
+(s/def ::command
+  (s/cat :command-id   help/qualified-keyword?
+         :command-data (s/? map?)
+         :command-meta (s/? map?)))
+
+(s/def ::generated-effects
+  (s/nilable (s/cat :commands (s/+ ::command))))

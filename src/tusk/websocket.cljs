@@ -67,7 +67,9 @@
   ([params]
    (let [xform-fn   (constantly (map remote-event->local-event))
          ex-handler (fn [error]
-                      [::error {:error error} {:error? true}])]
+                      [:websocket-client-event-pipeliner/error
+                       {:error error}
+                       {:error? true}])]
      (-> params
          (assoc :xform-fn   xform-fn
                 :ex-handler ex-handler

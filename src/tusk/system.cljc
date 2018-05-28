@@ -6,6 +6,7 @@
    [tusk.datastore :as dts]
    [tusk.websocket :as ws]
    [tusk.async :as as]
+   [tusk.async.handler]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
               :refer [get-sch-adapter]]])))
 

@@ -115,7 +115,9 @@
   ([params]
    (let [xform-fn   (constantly (map tx-report->event))
          ex-handler (fn [error]
-                      [::error {:error error} {:error? true}])]
+                      [:datastore-tx-pipeliner/error
+                       {:error error}
+                       {:error? true}])]
      (-> params
          (assoc :xform-fn   xform-fn
                 :ex-handler ex-handler
