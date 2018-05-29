@@ -18,7 +18,7 @@
 (defn- wrap-component
   [handler component]
   (fn [request]
-    (assoc request :component component)))
+    (handler (assoc request :component component))))
 
 (defrecord WebMiddlewareContainer []
   mp/MiddlewareContainer
