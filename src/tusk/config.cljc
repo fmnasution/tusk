@@ -21,7 +21,8 @@
   (stop [{:keys [value] :as this}]
     (if (nil? value)
       this
-      (assoc this :value nil))))
+      (do (log/info "Forgetting config...")
+          (assoc this :value nil)))))
 
 (defn create-config
   [{:keys [source option] :as params}]
