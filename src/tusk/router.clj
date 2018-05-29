@@ -18,7 +18,7 @@
                       #(satisfies? rrp/ResourceProvider %))))
         component))
 
-(defrecord RingRouter [handler]
+(defrecord RingRouter [routes handler]
   c/Lifecycle
   (start [{:keys [handler] :as this}]
     (if (some? handler)
@@ -33,12 +33,9 @@
                                     (res/content-type
                                      (res/not-found)
                                      "text/plain")))]
-            (assoc this :handler handler)))))
+            (assoc this :routes routes :handler handler)))))
   (stop [this]
-    (if (nil? handler)
-      this
-      (do (log/info "Destroying ring router...")
-          (assoc this :handler nil)))))
+    this))
 
 (defn create-ring-router
   []
