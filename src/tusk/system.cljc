@@ -6,15 +6,15 @@
    [tusk.datastore :as dts]
    [tusk.websocket :as ws]
    [tusk.async :as as]
-   [tusk.web :as w]
    [tusk.router :as rr]
    [tusk.middleware :as m]
    [tusk.websocket.routes :as wsrs]
-   [tusk.web.middleware :as wm]
    [tusk.web.routes :as wrs]
    [tusk.async.handler]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
-              :refer [get-sch-adapter]]])))
+              :refer [get-sch-adapter]]
+             [tusk.web :as w]
+             [tusk.web.middleware :as wm]])))
 
 ;; --------| system |---------
 
@@ -24,18 +24,6 @@
    :config
    (cf/create-config {:source "resources/private/tusk/config.edn"
                       :option option})
-
-   :web-server
-   (-> (w/create-web-server {:config-key :web-server})
-       (c/using [:config])
-       (c/using {:ring-handler    :ring-router
-                 :ring-middleware :middleware-collector}))
-
-   :ring-router
-   (c/using
-    (rr/create-ring-router)
-    [:web-route-config
-     :websocket-server-route-config])
 
    :web-route-config
    (wrs/create-web-route-config)
@@ -47,11 +35,6 @@
    (c/using
     (m/create-middleware-collector)
     [:web-middleware-container])
-
-   :web-middleware-container
-   (c/using
-    (wm/create-web-middleware-container)
-    [:websocket-server :ring-router])
 
    :datastore
    (c/using
@@ -91,7 +74,24 @@
               (c/using
                (ws/create-websocket-server-event-pipeliner)
                {:from :websocket-server
-                :to   :event-dispatcher})]
+                :to   :event-dispatcher})
+
+              :ring-router
+              (c/using
+               (rr/create-ring-router)
+               [:web-route-config
+                :websocket-server-route-config])
+
+              :web-server
+              (-> (w/create-web-server {:config-key :web-server})
+                  (c/using [:config])
+                  (c/using {:ring-handler    :ring-router
+                            :ring-middleware :middleware-collector}))
+
+              :web-middleware-container
+              (c/using
+               (wm/create-web-middleware-container)
+               [:websocket-server :ring-router])]
        :cljs [:websocket-client
               (ws/create-websocket-client
                {:server-uri    "/chsk"

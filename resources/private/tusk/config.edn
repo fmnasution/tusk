@@ -1,3 +1,14 @@
-{:datastore  #profile {:dev {:kind :datomic
-                             :uri  "datomic:mem://tusk-dev"}}
- :web-server #profile {:dev {:port 8080}}}
+{:datastore       #profile {:dev {:kind :datomic
+                                  :uri  "datomic:mem://tusk-dev"}}
+ :web-server      #profile {:dev {:port 8080}}
+ :figwheel-server {:all-builds       [{:id           "dev"
+                                       :source-paths ["src/"]
+                                       :compiler     {:main          tusk.app
+                                                      :output-to     "resources/public/tusk/app.js"
+                                                      :output-dir    "resources/public/tusk/out"
+                                                      :source-map    true
+                                                      :optimizations :none
+                                                      :pretty-print  true}
+                                       :figwheel     true}]
+                   :figwheel-options #profile {:dev {:server-port 8081}}
+                   :build-ids        #profile {:dev ["dev"]}}}
