@@ -24,15 +24,16 @@
     (if (some? handler)
       this
       (do (log/info "Creating ring router...")
-          (let [route-configs (collect-route-config this)
-                routes        ["" (into {} (map b/routes) route-configs)]
-                resources     (into {} (map rrp/resources) route-configs)
-                bidi-handler  (make-handler routes resources)
-                handler       (fn [req]
-                                (or (bidi-handler req)
-                                    (res/content-type
-                                     (res/not-found)
-                                     "text/plain")))]
+          (let [route-configs     (collect-route-config this)
+                routes            ["" (into {} (map b/routes) route-configs)]
+                resources         (into {} (map rrp/resources) route-configs)
+                bidi-handler      (make-handler routes resources)
+                not-found-handler (-> (res/not-found)
+                                      (res/content-type "text/plain")
+                                      (constantly))
+                handler           (fn [req]
+                                    (or (bidi-handler req)
+                                        (not-found-handler req)))]
             (assoc this :routes routes :handler handler)))))
   (stop [this]
     this))

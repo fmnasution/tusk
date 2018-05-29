@@ -20,7 +20,9 @@
                                   (get-in <> [:value config-key])
                                   (s/assert ::web-server-config <>))
                 middleware      (:wrapper ring-middleware identity)
-                default-handler (constantly (res/service-unavailable))
+                default-handler (-> (res/service-unavailable)
+                                    (res/content-type "text/plain")
+                                    (constantly))
                 handler         (:handler ring-handler default-handler)
                 server          (run-server (middleware handler) config)]
             (assoc this :server server)))))

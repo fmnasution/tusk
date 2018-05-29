@@ -12,11 +12,11 @@
     :let [websocket-server (:websocket-server component)]
 
     (nil? websocket-server)
-    (res/service-unavailable)
+    (res/content-type (res/service-unavailable) "text/plain")
 
     :let [resource (ws/ring-resource websocket-server request-method)]
 
     (nil? resource)
-    (res/method-not-allowed)
+    (res/content-type (res/method-not-allowed) "text/plain")
 
     :else (resource request)))

@@ -11,6 +11,7 @@
    [tusk.middleware :as m]
    [tusk.websocket.routes :as wsrs]
    [tusk.web.middleware :as wm]
+   [tusk.web.routes :as wrs]
    [tusk.async.handler]
    #?@(:clj [[taoensso.sente.server-adapters.http-kit
               :refer [get-sch-adapter]]])))
@@ -33,18 +34,24 @@
    :ring-router
    (c/using
     (rr/create-ring-router)
-    [:websocket-server-route-config])
+    [:web-route-config
+     :websocket-server-route-config])
+
+   :web-route-config
+   (wrs/create-web-route-config)
 
    :websocket-server-route-config
    (wsrs/create-websocket-server-resource-config)
 
    :middleware-collector
-   (m/create-middleware-collector)
+   (c/using
+    (m/create-middleware-collector)
+    [:web-middleware-container])
 
    :web-middleware-container
    (c/using
     (wm/create-web-middleware-container)
-    [:websocket-server])
+    [:websocket-server :ring-router])
 
    :datastore
    (c/using
