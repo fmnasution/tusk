@@ -52,6 +52,13 @@
                          :server-option  server-option
                          :started?       false}))
 
+(defn ring-resource
+  [{:keys [ring-ajax-get ring-ajax-post] :as websocket-server} request-method]
+  (case request-method
+    :get  ring-ajax-get
+    :post ring-ajax-post
+    nil))
+
 ;; --------| websocket event pipeliner |---------
 
 (defn- remote-event->local-event

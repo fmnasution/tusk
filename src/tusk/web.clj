@@ -9,18 +9,20 @@
 
 ;; --------| web server |--------
 
-(defrecord WebServer [config config-key ring-handler server]
+(defrecord WebServer [config config-key ring-handler ring-middleware server]
   c/Lifecycle
-  (start [{:keys [config config-key ring-handler server] :as this}]
+  (start [{:keys [config config-key ring-handler ring-middleware server]
+           :as   this}]
     (if (some? server)
       this
       (do (log/info "Starting web server...")
-          (let [config  (as-> config <>
-                          (get-in <> [:value config-key])
-                          (s/assert ::web-server-config <>))
-                handler (:handler ring-handler (constantly
-                                                (res/service-unavailable)))
-                server  (run-server handler config)]
+          (let [config          (as-> config <>
+                                  (get-in <> [:value config-key])
+                                  (s/assert ::web-server-config <>))
+                middleware      (:wrapper ring-middleware identity)
+                default-handler (constantly (res/service-unavailable))
+                handler         (:handler ring-handler default-handler)
+                server          (run-server (middleware handler) config)]
             (assoc this :server server)))))
   (stop [{:keys [server] :as this}]
     (if (nil? server)

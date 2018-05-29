@@ -10,6 +10,8 @@
                  [http-kit "2.3.0"]
                  [aero "1.1.3"]
                  [metosin/ring-http-response "0.9.0"]
+                 [metosin/muuntaja "0.6.0-SNAPSHOT"]
+                 [ring/ring-defaults "0.3.1"]
                  [com.cognitect/transit-clj "0.8.309"]
                  ;; --------| cljc |--------
                  [org.clojure/core.async "0.4.474"]
