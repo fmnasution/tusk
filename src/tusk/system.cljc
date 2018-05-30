@@ -11,10 +11,11 @@
    [tusk.websocket.routes :as wsrs]
    [tusk.web.routes :as wrs]
    [tusk.async.handler]
-   #?@(:clj [[taoensso.sente.server-adapters.http-kit
-              :refer [get-sch-adapter]]
-             [tusk.web :as w]
-             [tusk.web.middleware :as wm]])))
+   #?@(:clj  [[taoensso.sente.server-adapters.http-kit
+               :refer [get-sch-adapter]]
+              [tusk.web :as w]
+              [tusk.web.middleware :as wm]]
+       :cljs [[tusk.web.ajax :as wa]])))
 
 ;; --------| system |---------
 
@@ -110,4 +111,15 @@
               (c/using
                (rr/create-html-router-pipeliner)
                {:from :html-router
+                :to   :event-dispatcher})
+
+              :server-ajax-caller
+              (c/using
+               (wa/create-server-ajax-caller)
+               [:websocket-client])
+
+              :server-ajax-pipeliner
+              (c/using
+               (wa/create-server-ajax-pipeliner)
+               {:from :server-ajax-caller
                 :to   :event-dispatcher})]) ))

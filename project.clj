@@ -16,6 +16,7 @@
                  ;; --------| cljc |--------
                  [org.clojure/core.async "0.4.474"]
                  [com.stuartsierra/component "0.3.2"]
+                 [cljs-ajax "0.7.3"]
                  [rum "0.11.2"]
                  [datascript "0.16.5"]
                  [bidi "2.1.3"]

@@ -121,6 +121,10 @@
   ([]
    (create-websocket-client-pipeliner {})))
 
+(defn csrf-token
+  [{:keys [state] :as websocket-client}]
+  (:csrf-token @state))
+
 ;; --------| spec |---------
 
 (s/def ::server-uri help/nblank-str?)
