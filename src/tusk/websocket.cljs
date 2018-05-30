@@ -151,5 +151,11 @@
                                         ::wrap-recv-evs?
                                         ::ws-kalive-ms]))
 
+(s/def ::reply-chan help/chan?)
+
+(s/def ::output-chan help/chan?)
+
 (s/def ::websocket-params (s/keys :req-un [::server-uri]
-                                  :opt-un [::client-option]))
+                                  :opt-un [::client-option
+                                           ::reply-chan
+                                           ::output-chan]))
