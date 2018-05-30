@@ -1,5 +1,6 @@
 (ns tusk.router
   (:require
+   [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as c]
    [bidi.bidi :as b]
    [bidi.ring :refer [make-handler]]
@@ -14,8 +15,8 @@
   (into []
         (comp
          (map val)
-         (filter (and #(satisfies? b/RouteProvider %)
-                      #(satisfies? rrp/ResourceProvider %))))
+         (filter (and #(s/valid? ::rrp/route-provider %)
+                      #(s/valid? ::rrp/resource-provider %))))
         component))
 
 (defrecord RingRouter [routes handler]

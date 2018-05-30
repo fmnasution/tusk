@@ -2,7 +2,9 @@
   (:require
    [com.stuartsierra.component :as c]
    [taoensso.timbre :as log]
-   [tusk.middleware.protocols :as mp]))
+   [tusk.middleware.protocols :as mp]
+   #?@(:clj  [[clojure.spec.alpha :as s]]
+       :cljs [[cljs.spec.alpha :as s]])))
 
 (defn- inject-component
   [component entry]
@@ -31,7 +33,7 @@
   (into {}
         (comp
          (map val)
-         (filter #(satisfies? mp/MiddlewareContainer %))
+         (filter #(s/valid? ::mp/middleware-container %))
          (map (fn [middleware-container]
                 (let [id (mp/id middleware-container)]
                   {id {:middleware (mp/middleware middleware-container)
