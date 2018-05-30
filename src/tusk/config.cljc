@@ -16,7 +16,7 @@
       this
       (do (log/info "Reading config...")
           (let [value #?(:clj  (read-config source option)
-                         :cljs {})]
+                         :cljs {:datastore {:kind :datascript}})]
             (assoc this :value value)))))
   (stop [{:keys [value] :as this}]
     (if (nil? value)
