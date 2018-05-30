@@ -12,48 +12,79 @@
 
 ;; --------| websocket client |--------
 
+(defn- wrap-reply-data
+  [reply-data]
+  {:type :reply
+   :data reply-data})
+
+(defn- wrap-remote-event
+  [remote-event]
+  {:type :remote-event
+   :data remote-event})
+
+(defn- bootstrap-websocket-client!
+  [{:keys [server-uri
+           client-option
+           chsk
+           recv-chan
+           send!
+           state
+           reply-chan
+           output-chan]
+    :as   websocket-client}]
+  (if (every? nil? [chsk recv-chan send! state])
+    (let [{:keys [chsk ch-recv send-fn state]}
+          (st/make-channel-socket! server-uri client-option)]
+      (a/pipeline 1 output-chan (map wrap-reply-data) reply-chan)
+      (a/pipeline 1 output-chan (map wrap-remote-event) ch-recv)
+      (assoc websocket-client
+             :chsk      chsk
+             :recv-chan ch-recv
+             :send!     send-fn
+             :state     state))
+    websocket-client))
+
 (defrecord WebsocketClient [server-uri
                             client-option
                             chsk
                             recv-chan
                             send!
                             state
+                            reply-chan
+                            output-chan
                             started?]
   asp/ISource
   (source-chan [websocket-client]
-    (:recv-chan websocket-client))
+    (:output-chan websocket-client))
 
   c/Lifecycle
-  (start [{:keys [server-uri client-option started?] :as this}]
+  (start [{:keys [server-uri client-option reply-chan output-chan started?]
+           :as   this}]
     (if started?
       this
       (do (log/info "Starting websocket client...")
-          (let [{:keys [chsk ch-recv send-fn state]}
-                (st/make-channel-socket! server-uri client-option)]
-            (assoc this
-                   :chsk      chsk
-                   :recv-chan ch-recv
-                   :send!     send-fn
-                   :state     state
-                   :started?  true)))))
-  (stop [{:keys [recv-chan chsk started?] :as this}]
+          (let [reply-chan  (or reply-chan (a/chan 100))
+                output-chan (or output-chan (a/chan 100))]
+            (-> this
+                (assoc :reply-chan  reply-chan
+                       :output-chan output-chan)
+                (bootstrap-websocket-client!)
+                (assoc :started? true))))))
+  (stop [{:keys [chsk started?] :as this}]
     (if-not started?
       this
       (do (log/info "Stopping websocket client...")
           (st/chsk-disconnect! chsk)
-          (a/close! recv-chan)
-          (assoc this
-                 :chsk      nil
-                 :recv-chan nil
-                 :send!     nil
-                 :state     nil
-                 :started?  false)))))
+          (assoc this :started? false)))))
 
 (defn create-websocket-client
-  [{:keys [server-uri client-option] :as params}]
+  [{:keys [server-uri client-option reply-chan output-chan]
+    :as   params}]
   (s/assert ::websocket-params params)
   (map->WebsocketClient {:server-uri    server-uri
                          :client-option client-option
+                         :reply-chan    reply-chan
+                         :output-chan   output-chan
                          :started?      false}))
 
 ;; --------| websocket event pipeliner |---------
@@ -63,11 +94,23 @@
   (let [[id data] event]
     [id {::?data data}]))
 
-(defn create-websocket-client-event-pipeliner
+(defn- reply->event
+  [{:keys [reply event] :as reply-data}]
+  (let [[id data] event]
+    [id (assoc data ::?data reply)]))
+
+(defn- process-message
+  [{message-type :type
+    data         :data}]
+  (case message-type
+    :reply        (reply->event data)
+    :remote-event (remote-event->local-event data)))
+
+(defn create-websocket-client-pipeliner
   ([params]
-   (let [xform-fn   (constantly (map remote-event->local-event))
+   (let [xform-fn   (constantly (map process-message))
          ex-handler (fn [error]
-                      [:websocket-client-event-pipeliner/error
+                      [:websocket-client-pipeliner/error
                        {:error error}
                        {:error? true}])]
      (-> params
@@ -76,7 +119,7 @@
                 :message    "Pipelining remote event...")
          (as/create-channel-pipeliner))))
   ([]
-   (create-websocket-client-event-pipeliner {})))
+   (create-websocket-client-pipeliner {})))
 
 ;; --------| spec |---------
 

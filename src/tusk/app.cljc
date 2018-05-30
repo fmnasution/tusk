@@ -5,3 +5,5 @@
 
 #?(:cljs (defonce system
            (c/start (st/create-system-map {}))))
+
+#?(:cljs (enable-console-print!))

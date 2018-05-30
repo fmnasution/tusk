@@ -65,9 +65,9 @@
                {:server-adapter (get-sch-adapter)
                 :server-option  {:packer (get-transit-packer)}})
 
-              :websocket-server-event-pipeliner
+              :websocket-server-pipeliner
               (c/using
-               (ws/create-websocket-server-event-pipeliner)
+               (ws/create-websocket-server-pipeliner)
                {:from :websocket-server
                 :to   :event-dispatcher})
 
@@ -97,9 +97,9 @@
                {:server-uri    "/chsk"
                 :client-option {:packer (get-transit-packer)}})
 
-              :websocket-client-event-pipeliner
+              :websocket-client-pipeliner
               (c/using
-               (ws/create-websocket-client-event-pipeliner)
+               (ws/create-websocket-client-pipeliner)
                {:from :websocket-client
                 :to   :event-dispatcher})
 

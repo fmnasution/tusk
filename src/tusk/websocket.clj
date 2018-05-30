@@ -70,7 +70,7 @@
        ::device-id    client-id
        ::?reply-fn    ?reply-fn}])
 
-(defn create-websocket-server-event-pipeliner
+(defn create-websocket-server-pipeliner
   ([params]
    (let [xform-fn   (constantly (map remote-event->local-event))
          ex-handler (fn [error]
@@ -83,7 +83,7 @@
                 :message    "Pipelining remote event...")
          (as/create-channel-pipeliner))))
   ([]
-   (create-websocket-server-event-pipeliner {})))
+   (create-websocket-server-pipeliner {})))
 
 ;; --------| spec |---------
 
