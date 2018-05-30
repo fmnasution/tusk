@@ -106,8 +106,8 @@
               :html-router
               (rr/create-html-router)
 
-              :html-router-location-pipeliner
+              :html-router-pipeliner
               (c/using
-               (rr/create-html-router-location-pipeliner)
+               (rr/create-html-router-pipeliner)
                {:from :html-router
                 :to   :event-dispatcher})]) ))

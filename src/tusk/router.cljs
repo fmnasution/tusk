@@ -53,9 +53,7 @@
     (if (nil? router)
       this
       (do (log/info "Stopping html router...")
-          (assoc this
-                 :routes nil
-                 :router nil)))))
+          (assoc this :routes nil :router nil)))))
 
 (defn create-html-router
   ([{:keys [location-chan default-location] :as params}]
@@ -78,7 +76,7 @@
   [location]
   [:html-router/location location])
 
-(defn create-html-router-location-pipeliner
+(defn create-html-router-pipeliner
   ([params]
    (let [xform-fn   (constantly
                      (comp
@@ -89,12 +87,12 @@
                        {:error error}
                        {:error? true}])]
      (-> params
-         (assoc :xform-fn xform-fn
+         (assoc :xform-fn   xform-fn
                 :ex-handler ex-handler
-                :message "Pipelining location from html router...")
+                :message    "Pipelining location from html router...")
          (as/create-channel-pipeliner))))
   ([]
-   (create-html-router-location-pipeliner {})))
+   (create-html-router-pipeliner {})))
 
 ;; --------| spec |--------
 
