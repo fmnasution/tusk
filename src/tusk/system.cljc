@@ -31,13 +31,6 @@
    :websocket-server-route-config
    (wsrs/create-websocket-server-resource-config)
 
-   :middleware-collector
-   (c/using
-    (m/create-middleware-collector)
-    [:web-middleware-container
-     :websocket-server
-     :ring-router])
-
    :datastore
    (c/using
     (dts/create-datastore {:config-key :datastore})
@@ -90,6 +83,13 @@
                   (c/using {:ring-handler    :ring-router
                             :ring-middleware :middleware-collector}))
 
+              :middleware-collector
+              (c/using
+               (m/create-middleware-collector)
+               [:web-middleware-container
+                :websocket-server
+                :ring-router])
+
               :web-middleware-container
               (wm/create-web-middleware-container)]
        :cljs [:websocket-client
@@ -101,4 +101,13 @@
               (c/using
                (ws/create-websocket-client-event-pipeliner)
                {:from :websocket-client
+                :to   :event-dispatcher})
+
+              :html-router
+              (rr/create-html-router)
+
+              :html-router-location-pipeliner
+              (c/using
+               (rr/create-html-router-location-pipeliner)
+               {:from :html-router
                 :to   :event-dispatcher})]) ))
