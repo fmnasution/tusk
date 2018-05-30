@@ -6,18 +6,18 @@
 
 ;; --------| web route config |--------
 
-(defrecord WebRouteConfig []
+(defrecord WebFilesRouteConfig []
   b/RouteProvider
   (routes [_]
     {"/resources/public" {true ::asset}
      "/"                 ::index}))
 
 #?(:clj (extend-protocol rrp/ResourceProvider
-          WebRouteConfig
+          WebFilesRouteConfig
           (resources [_]
             {::asset wr/asset-resource
              ::index wr/index-resource})))
 
-(defn create-web-route-config
+(defn create-web-files-route-config
   []
-  (map->WebRouteConfig {}))
+  (map->WebFilesRouteConfig {}))

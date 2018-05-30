@@ -4,6 +4,7 @@
    [clojure.spec.alpha :as s]
    [com.stuartsierra.component :as c]
    [com.stuartsierra.component.repl :as cr]
+   [figwheel-sidecar.system :as fws]
    [tusk.system :as st]
    [tusk.figwheel :as fw]))
 
@@ -37,3 +38,7 @@
 (defn restart!
   []
   (cr/reset))
+
+(defn cljs-repl!
+  []
+  (fws/cljs-repl (get-in cr/system [:figwheel-server :figwheel])))

@@ -20,15 +20,19 @@
         component))
 
 (defrecord RingRouter [routes handler]
+  b/RouteProvider
+  (routes [ring-router]
+    (:routes ring-router))
+
   c/Lifecycle
   (start [{:keys [handler] :as this}]
     (if (some? handler)
       this
       (do (log/info "Creating ring router...")
           (let [route-configs     (collect-route-config this)
-                routes            ["" (into {} (map b/routes) route-configs)]
+                routes            (into {} (map b/routes) route-configs)
                 resources         (into {} (map rrp/resources) route-configs)
-                bidi-handler      (make-handler routes resources)
+                bidi-handler      (make-handler ["" routes] resources)
                 not-found-handler (-> (res/not-found)
                                       (res/content-type "text/plain")
                                       (constantly))

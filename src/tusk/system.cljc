@@ -25,8 +25,8 @@
    (cf/create-config {:source "resources/private/tusk/config.edn"
                       :option option})
 
-   :web-route-config
-   (wrs/create-web-route-config)
+   :web-files-route-config
+   (wrs/create-web-files-route-config)
 
    :websocket-server-route-config
    (wsrs/create-websocket-server-resource-config)
@@ -34,7 +34,9 @@
    :middleware-collector
    (c/using
     (m/create-middleware-collector)
-    [:web-middleware-container])
+    [:web-middleware-container
+     :websocket-server
+     :ring-router])
 
    :datastore
    (c/using
@@ -79,7 +81,7 @@
               :ring-router
               (c/using
                (rr/create-ring-router)
-               [:web-route-config
+               [:web-files-route-config
                 :websocket-server-route-config])
 
               :web-server
@@ -89,9 +91,7 @@
                             :ring-middleware :middleware-collector}))
 
               :web-middleware-container
-              (c/using
-               (wm/create-web-middleware-container)
-               [:websocket-server :ring-router])]
+              (wm/create-web-middleware-container)]
        :cljs [:websocket-client
               (ws/create-websocket-client
                {:server-uri    "/chsk"
