@@ -109,7 +109,7 @@
 
 (defn- tx-report->event
   [tx-report]
-  [::tx-report tx-report])
+  [:datastore/tx-report tx-report])
 
 (defn create-datastore-tx-pipeliner
   ([params]
