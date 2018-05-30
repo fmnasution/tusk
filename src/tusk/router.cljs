@@ -8,6 +8,7 @@
    [taoensso.timbre :as log]
    [taoensso.encore :as help]
    [tusk.router.protocols :as rrp]
+   [tusk.async.protocols :as asp]
    [tusk.async :as as]))
 
 ;; --------| html router |--------
@@ -27,6 +28,10 @@
     (a/put! location-chan location)))
 
 (defrecord HtmlRouter [location-chan default-location routes router]
+  asp/ISource
+  (source-chan [html-router]
+    (:location-chan html-router))
+
   c/Lifecycle
   (start [{:keys [location-chan router] :as this}]
     (if (some? router)
