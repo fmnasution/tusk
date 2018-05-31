@@ -55,12 +55,20 @@
    :event-consumer
    (c/using
     (as/create-event-consumer)
-    [:event-dispatcher])
+    [:event-dispatcher :config :datastore])
 
    :effect-executor
    (c/using
     (as/create-effect-executor)
-    [:event-consumer :event-dispatcher])
+    [:event-consumer
+     :event-dispatcher
+     :config
+     :datastore
+     #?@(:clj  [:websocket-server]
+         :cljs [:websocket-client
+                :html-router
+                :server-ajax-caller
+                :element])])
 
    #?@(:clj  [:websocket-server
               (ws/create-websocket-server
