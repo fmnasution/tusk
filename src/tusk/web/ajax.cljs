@@ -26,7 +26,7 @@
         component))
 
 (defn- csrf-token-interceptor
-  [{:keys [websocket-client] :as ajax-caller}]
+  [{:keys [websocket-client] :as server-ajax-caller}]
   (aj/to-interceptor
    {:name    "CSRF Token"
     :request (fn [request]
@@ -72,6 +72,14 @@
    (map->ServerAjaxCaller {:response-chan response-chan}))
   ([]
    (create-server-ajax-caller {})))
+
+(defn request!
+  [{:keys [requester] :as server-ajax-caller}
+   handler
+   route-params
+   request-method
+   option]
+  (requester handler route-params request-method option))
 
 ;; --------| server ajax pipeliner |--------
 
