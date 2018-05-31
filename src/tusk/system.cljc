@@ -15,7 +15,8 @@
                :refer [get-sch-adapter]]
               [tusk.web :as w]
               [tusk.web.middleware :as wm]]
-       :cljs [[tusk.web.ajax :as wa]])))
+       :cljs [[tusk.web.ajax :as wa]
+              [tusk.element :as el]])))
 
 ;; --------| system |---------
 
@@ -122,4 +123,10 @@
               (c/using
                (wa/create-server-ajax-pipeliner)
                {:from :server-ajax-caller
-                :to   :event-dispatcher})]) ))
+                :to   :event-dispatcher})
+
+              :element
+              (c/using
+               (el/create-element
+                {:config-key :element})
+               [:config])]) ))

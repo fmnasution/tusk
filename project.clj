@@ -12,6 +12,7 @@
                  [metosin/ring-http-response "0.9.0"]
                  [metosin/muuntaja "0.6.0-SNAPSHOT"]
                  [ring/ring-defaults "0.3.1"]
+                 [hiccup "2.0.0-alpha1"]
                  [com.cognitect/transit-clj "0.8.309"]
                  ;; --------| cljc |--------
                  [org.clojure/core.async "0.4.474"]
@@ -25,6 +26,7 @@
                  [com.taoensso/encore "2.96.0"]
                  ;; --------| cljs |--------
                  [org.clojure/clojurescript "1.10.238"]
+                 [reagent "0.8.2-SNAPSHOT"]
                  [com.cognitect/transit-cljs "0.8.256"]]
   :source-paths ["src/"]
   :resource-paths ["resources/"]

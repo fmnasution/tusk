@@ -3,7 +3,8 @@
    [clojure.java.io :as io]
    [bidi.bidi :as b]
    [ring.util.http-response :as res]
-   [rum.core :as rum :refer [defc]]
+   [hiccup.core :as h]
+   [hiccup.page :as hp]
    [taoensso.encore :as help]))
 
 ;; --------| index resource |--------
@@ -13,36 +14,25 @@
   (let [routes ["" (b/routes ring-router)]]
     (str (b/path-for routes :tusk.web.routes/asset) "/" path)))
 
-(defc include-css
-  [path]
-  [:link {:type "text/css"
-          :rel  "stylesheet"
-          :href path}])
-
-(defc include-js
-  [path]
-  [:script {:type "text/javascript"
-            :src  path}])
-
-(defc index-template
+(defn index-template
   [request]
   [:html
    [:head
     [:meta {:charset "utf-8"}]
     [:meta {:name    "viewport"
             :content "width=device-width, initial-scale=1, shrink-to-fit=no"}]
-    (include-css "https://fonts.googleapis.com/css?family=Roboto:300,400,500")
-    (include-css "https://fonts.googleapis.com/icon?family=Material+Icons")
+    (hp/include-css "https://fonts.googleapis.com/css?family=Roboto:300,400,500")
+    (hp/include-css "https://fonts.googleapis.com/icon?family=Material+Icons")
     [:title "tusk"]]
    [:body
     [:div#app]
-    (include-js (asset-path request "tusk/app.js"))]])
+    (hp/include-js (asset-path request "tusk/app.js"))]])
 
 (defn index-resource
   [{:keys [request-method] :as request}]
   (if (not= :get request-method)
     (res/content-type (res/method-not-allowed) "text/plain")
-    (-> (rum/render-html (index-template request))
+    (-> (h/html (index-template request))
         (res/ok)
         (res/content-type "text/html"))))
 
