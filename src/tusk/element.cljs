@@ -10,7 +10,7 @@
 ;; --------| element |--------
 
 (defn index
-  [message]
+  [element message]
   [:div
    [:h1 message]])
 
@@ -24,7 +24,7 @@
                          (get-in <> [:value config-key])
                          (s/assert ::element-config <>))
                 node   (gdom/getRequiredElement (:target-id config))]
-            (r/render [index "Hello World!"] node)
+            (r/render [index this "Hello World!"] node)
             (assoc this :node node)))))
   (stop [{:keys [node] :as this}]
     (if (nil? node)

@@ -129,4 +129,4 @@
               (c/using
                (el/create-element
                 {:config-key :element})
-               [:config])]) ))
+               [:config :datastore :event-dispatcher])]) ))
